@@ -4,6 +4,14 @@
   "description": "Thin MCP server that lets external AI agents (Cursor, Claude Desktop) drive Deepy generation over the public Deepy API using a personal API key. Carries no business logic — the backend is the source of truth.",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepy-to/deepy-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/deepy-to/deepy-mcp-server/issues"
+  },
+  "homepage": "https://github.com/deepy-to/deepy-mcp-server#readme",
   "bin": {
     "deepy-mcp-server": "dist/index.js"
   },

@@ -21,15 +21,16 @@ tools, prompts and resources.
 
 Point your MCP client at the connector and give it two environment values:
 
-| Variable             | Value                                                                            |
-| -------------------- | -------------------------------------------------------------------------------- |
-| `DEEPY_API_BASE_URL` | Deepy API base URL, no trailing slash. Dev stand: `https://app.prod.einfra.tech` |
-| `DEEPY_API_KEY`      | your personal key (`sk_live_…`) — **only** from config/env, never chat           |
-| `DEEPY_LOG_LEVEL`    | optional: `debug\|info\|warn\|error\|silent` (default `info`)                    |
+| Variable             | Value                                                                      |
+| -------------------- | -------------------------------------------------------------------------- |
+| `DEEPY_API_BASE_URL` | Deepy API base URL, no trailing slash, e.g. `https://app.prod.einfra.tech` |
+| `DEEPY_API_KEY`      | your personal key (`sk_live_…`) — **only** from config/env, never chat     |
+| `DEEPY_LOG_LEVEL`    | optional: `debug\|info\|warn\|error\|silent` (default `info`)              |
 
-### Option A — run from the site-hosted tarball (works today)
+### Option A — run straight from GitHub (works today, no npm needed)
 
-No npm publish needed; `npx` downloads and runs the connector from the Deepy site.
+`npx` clones this repo, installs its dependencies and runs the committed build —
+no npm publish required.
 
 **Cursor** — put this in `~/.cursor/mcp.json` (all projects) or
 `.cursor/mcp.json` (one project):
@@ -39,7 +40,7 @@ No npm publish needed; `npx` downloads and runs the connector from the Deepy sit
   "mcpServers": {
     "deepy": {
       "command": "npx",
-      "args": ["-y", "https://app.prod.einfra.tech/mcp/deepy-mcp-server.tgz"],
+      "args": ["-y", "github:deepy-to/deepy-mcp-server"],
       "env": {
         "DEEPY_API_BASE_URL": "https://app.prod.einfra.tech",
         "DEEPY_API_KEY": "sk_live_your_key_here"
@@ -59,7 +60,8 @@ When `@deepy/mcp-server` is published to npm, the args simplify to
 
 ### Option C — local copy (offline / development)
 
-Download the connector (the `.tgz` above), unzip it, then:
+Clone this repo (`git clone https://github.com/deepy-to/deepy-mcp-server`), run
+`npm install`, then point the config at the built entrypoint:
 
 ```json
 {
@@ -86,7 +88,7 @@ Download the connector (the `.tgz` above), unzip it, then:
 | `deepy_estimate_generation` | price a generation (no charge)                 | `POST /api/v1/public/generations/estimate`        |
 | `deepy_create_generation`   | start a generation (requires `confirmed=true`) | `POST /api/v1/public/generations`                 |
 | `deepy_get_generation`      | poll status                                    | `GET /api/v1/public/generations/{id}`             |
-| `deepy_get_result_url`      | result endpoint                                | `GET /api/v1/public/generations/{id}/results/{i}` |
+| `deepy_get_result`          | fetch result media (server-side)               | `GET /api/v1/public/generations/{id}/results/{i}` |
 
 The server also ships MCP **prompts** and **resources** (skills) that teach an
 agent the safe generation flow.
@@ -99,7 +101,7 @@ agent the safe generation flow.
 4. Estimate the cost (`deepy_estimate_generation`).
 5. Show the price and get **explicit** user approval.
 6. Only then `deepy_create_generation` with `confirmed=true`.
-7. Poll `deepy_get_generation`, then fetch `deepy_get_result_url`.
+7. Poll `deepy_get_generation`, then fetch `deepy_get_result`.
 
 `deepy_create_generation` **refuses** to run without `confirmed=true`, generates
 an idempotency key when none is given, and never retries a paid create.
