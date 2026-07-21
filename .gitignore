@@ -1,0 +1,22 @@
+# Node dependencies
+node_modules
+
+# Test coverage
+coverage
+
+# Local env files — NEVER commit real keys
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.DS_Store
+.idea
+.fleet
+
+# Logs / scratch
+logs
+*.log
+
+# NOTE: dist/ IS committed on purpose so `npx -y github:<owner>/<repo>` can run
+# the connector without a build step on the user's machine.

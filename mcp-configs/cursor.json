@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "deepy": {
+      "command": "npx",
+      "args": ["-y", "https://app.prod.einfra.tech/mcp/deepy-mcp-server.tgz"],
+      "env": {
+        "DEEPY_API_BASE_URL": "https://app.prod.einfra.tech",
+        "DEEPY_API_KEY": "<paste_your_key>"
+      }
+    }
+  }
+}

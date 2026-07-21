@@ -1,0 +1,48 @@
+{
+  "name": "@deepy/mcp-server",
+  "version": "0.1.0",
+  "description": "Thin MCP server that lets external AI agents (Cursor, Claude Desktop) drive Deepy generation over the public Deepy API using a personal API key. Carries no business logic — the backend is the source of truth.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "deepy-mcp-server": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "mcp-configs",
+    "README.md",
+    ".env.example"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^22.10.0",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.1.1",
+    "tsx": "^4.23.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.62.1",
+    "vitest": "^4.1.7"
+  }
+}

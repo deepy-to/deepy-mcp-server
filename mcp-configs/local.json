@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "deepy": {
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/deepy-mcp-server/dist/index.js"],
+      "env": {
+        "DEEPY_API_BASE_URL": "https://app.prod.einfra.tech",
+        "DEEPY_API_KEY": "<paste_your_key>"
+      }
+    }
+  }
+}

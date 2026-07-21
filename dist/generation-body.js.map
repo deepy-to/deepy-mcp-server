@@ -1,0 +1,1 @@
+{"version":3,"file":"generation-body.js","sourceRoot":"","sources":["../src/generation-body.ts"],"names":[],"mappings":"AASA;;;;;;GAMG;AACH,MAAM,UAAU,mBAAmB,CAAC,KAAsB;IACxD,OAAO;QACL,SAAS,EAAE,KAAK,CAAC,SAAS;QAC1B,MAAM,EAAE,KAAK,CAAC,MAAM;QACpB,UAAU,EAAE,KAAK,CAAC,UAAU,IAAI,EAAE;QAClC,cAAc,EAAE,KAAK,CAAC,cAAc,IAAI,EAAE;KAC3C,CAAC;AACJ,CAAC"}
