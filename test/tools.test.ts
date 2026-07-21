@@ -275,6 +275,21 @@ describe("deepy_get_result (GAP-6)", () => {
     expect(textOf(result)).not.toMatch(/Bearer|DEEPY_API_KEY|results\/0/);
   });
 
+  it("does NOT inline a large image (avoids broken base64) and delivers it via a saved file path", async () => {
+    // > INLINE_MAX_BYTES (160KB) but < the client's 8MB fetch cap → bytes are
+    // available, yet inlining a multi-KB base64 would arrive broken in the client.
+    const big = Uint8Array.from({ length: 200 * 1024 }, () => 7);
+    const { fetchImpl } = makeMockFetch(() => mediaResponse(big, "image/png"));
+    const result = await makeGetResultHandler(makeToolContext(fetchImpl))({
+      publicId: "gen_big_img",
+      index: undefined,
+    });
+    expect(result.isError).toBeFalsy();
+    expect(findBlock(result, "image")).toBeUndefined(); // NOT inlined
+    expect(textOf(result)).toMatch(/too large to embed inline|saved to/i);
+    expect(serializeResult(result)).not.toContain(TEST_CONFIG.apiKey);
+  });
+
   it("returns an inline audio content block", async () => {
     const { fetchImpl } = makeMockFetch(() =>
       mediaResponse(Uint8Array.from([5, 6, 7]), "audio/mpeg")
