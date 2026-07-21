@@ -5,13 +5,17 @@ import { ConfigError } from "../src/errors.js";
 // (a) missing DEEPY_API_KEY → clear startup error.
 describe("loadConfig", () => {
   it("throws a clear ConfigError mentioning DEEPY_API_KEY when the key is missing", () => {
-    expect(() => loadConfig({ DEEPY_API_BASE_URL: "https://anal.plus" })).toThrow(ConfigError);
-    expect(() => loadConfig({ DEEPY_API_BASE_URL: "https://anal.plus" })).toThrow(/DEEPY_API_KEY/);
+    expect(() => loadConfig({ DEEPY_API_BASE_URL: "https://api.example.test" })).toThrow(
+      ConfigError
+    );
+    expect(() => loadConfig({ DEEPY_API_BASE_URL: "https://api.example.test" })).toThrow(
+      /DEEPY_API_KEY/
+    );
   });
 
   it("treats a blank/whitespace key as missing", () => {
     expect(() =>
-      loadConfig({ DEEPY_API_KEY: "   ", DEEPY_API_BASE_URL: "https://anal.plus" })
+      loadConfig({ DEEPY_API_KEY: "   ", DEEPY_API_BASE_URL: "https://api.example.test" })
     ).toThrow(/DEEPY_API_KEY/);
   });
 
@@ -28,11 +32,11 @@ describe("loadConfig", () => {
   it("returns a trimmed config with the trailing slash stripped and default timeouts", () => {
     const config = loadConfig({
       DEEPY_API_KEY: "  sk_test_abc  ",
-      DEEPY_API_BASE_URL: "https://anal.plus/",
+      DEEPY_API_BASE_URL: "https://api.example.test/",
     });
     expect(config).toEqual({
       apiKey: "sk_test_abc",
-      baseUrl: "https://anal.plus",
+      baseUrl: "https://api.example.test",
       httpTimeoutMs: 30_000,
       resultsTimeoutMs: 120_000,
     });
@@ -41,7 +45,7 @@ describe("loadConfig", () => {
   it("honors DEEPY_HTTP_TIMEOUT_MS and keeps the results timeout at least 120s", () => {
     const config = loadConfig({
       DEEPY_API_KEY: "sk_test_abc",
-      DEEPY_API_BASE_URL: "https://anal.plus",
+      DEEPY_API_BASE_URL: "https://api.example.test",
       DEEPY_HTTP_TIMEOUT_MS: "5000",
     });
     expect(config.httpTimeoutMs).toBe(5000);
@@ -51,7 +55,7 @@ describe("loadConfig", () => {
   it("uses a results timeout equal to a large custom http timeout", () => {
     const config = loadConfig({
       DEEPY_API_KEY: "sk_test_abc",
-      DEEPY_API_BASE_URL: "https://anal.plus",
+      DEEPY_API_BASE_URL: "https://api.example.test",
       DEEPY_HTTP_TIMEOUT_MS: "200000",
     });
     expect(config.httpTimeoutMs).toBe(200_000);
@@ -62,7 +66,7 @@ describe("loadConfig", () => {
     for (const bad of ["0", "-5", "abc", "1.5"]) {
       const config = loadConfig({
         DEEPY_API_KEY: "sk_test_abc",
-        DEEPY_API_BASE_URL: "https://anal.plus",
+        DEEPY_API_BASE_URL: "https://api.example.test",
         DEEPY_HTTP_TIMEOUT_MS: bad,
       });
       expect(config.httpTimeoutMs).toBe(30_000);

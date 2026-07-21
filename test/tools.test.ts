@@ -429,14 +429,14 @@ describe("deepy_get_model path encoding", () => {
       modelName: "bytedance/seedance-2.0/text-to-video",
     });
     expect(calls[0]?.url).toBe(
-      "https://anal.plus/api/v1/public/models/bytedance/seedance-2.0/text-to-video"
+      "https://api.example.test/api/v1/public/models/bytedance/seedance-2.0/text-to-video"
     );
   });
 
   it("encodes special characters within a segment while keeping slashes", async () => {
     const { fetchImpl, calls } = makeMockFetch(() => jsonResponse(200, { modelName: "x" }));
     await makeGetModelHandler(makeToolContext(fetchImpl))({ modelName: "a b/c d" });
-    expect(calls[0]?.url).toBe("https://anal.plus/api/v1/public/models/a%20b/c%20d");
+    expect(calls[0]?.url).toBe("https://api.example.test/api/v1/public/models/a%20b/c%20d");
   });
 });
 

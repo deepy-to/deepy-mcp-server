@@ -18,7 +18,7 @@ export function loadConfig(env = process.env) {
     }
     const rawBaseUrl = (env.DEEPY_API_BASE_URL ?? "").trim();
     if (rawBaseUrl.length === 0) {
-        throw new ConfigError("DEEPY_API_BASE_URL is not set. Provide the Deepy API base URL (dev stand: " +
+        throw new ConfigError("DEEPY_API_BASE_URL is not set. Provide the Deepy API base URL (e.g. " +
             "https://app.prod.einfra.tech) via the DEEPY_API_BASE_URL environment variable. See .env.example.");
     }
     let parsed;

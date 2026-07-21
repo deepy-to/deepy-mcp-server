@@ -12,7 +12,7 @@ import type { ToolContext } from "../src/tools/context.js";
  */
 export const TEST_CONFIG: DeepyConfig = {
   apiKey: "sk_test_UNITTESTKEY0123456789",
-  baseUrl: "https://anal.plus",
+  baseUrl: "https://api.example.test",
   httpTimeoutMs: 30_000,
   resultsTimeoutMs: 120_000,
 };
