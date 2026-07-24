@@ -85,6 +85,7 @@ Clone this repo (`git clone https://github.com/deepy-to/deepy-mcp-server`), run
 | `deepy_list_models`         | list available models                          | `GET /api/v1/public/models`                       |
 | `deepy_get_model`           | model schema / options                         | `GET /api/v1/public/models/{name}`                |
 | `deepy_improve_prompt`      | rewrite a draft prompt                         | `POST /api/v1/public/improve-prompt`              |
+| `deepy_upload_file`         | upload a reference attachment (max 50 MiB)     | `POST /api/v1/public/files`                       |
 | `deepy_estimate_generation` | price a generation (no charge)                 | `POST /api/v1/public/generations/estimate`        |
 | `deepy_create_generation`   | start a generation (requires `confirmed=true`) | `POST /api/v1/public/generations`                 |
 | `deepy_get_generation`      | poll status                                    | `GET /api/v1/public/generations/{id}`             |
@@ -98,10 +99,16 @@ agent the safe generation flow.
 1. Understand the task (ask 1–2 clarifying questions if unclear).
 2. Pick a model (`deepy_list_models` / `deepy_get_model`).
 3. Improve the prompt (`deepy_improve_prompt`).
-4. Estimate the cost (`deepy_estimate_generation`).
-5. Show the price and get **explicit** user approval.
-6. Only then `deepy_create_generation` with `confirmed=true`.
-7. Poll `deepy_get_generation`, then fetch `deepy_get_result`.
+4. For every image/video/audio attachment, call `deepy_upload_file` with its
+   absolute local `filePath`; pass each returned `fileId` in `referenceFiles`.
+5. Estimate the cost (`deepy_estimate_generation`).
+6. Show the price and get **explicit** user approval.
+7. Only then `deepy_create_generation` with `confirmed=true`.
+8. Poll `deepy_get_generation`, then fetch `deepy_get_result`.
+
+`deepy_upload_file` accepts files up to 50 MiB. A `base64` + `filename` fallback
+exists for clients that cannot expose a local attachment path, but `filePath` is
+recommended for large files because base64 expands the MCP request.
 
 `deepy_create_generation` **refuses** to run without `confirmed=true`, generates
 an idempotency key when none is given, and never retries a paid create.

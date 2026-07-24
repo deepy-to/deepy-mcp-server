@@ -73,6 +73,15 @@ export interface ImprovePromptResponse {
   [key: string]: unknown;
 }
 
+export interface FileUploadResponse {
+  fileId: string;
+  mediaType: string;
+  sizeBytes: number;
+  contentType: string;
+  expiresAt: string;
+  [key: string]: unknown;
+}
+
 /**
  * The exact request body shared by BOTH `/generations/estimate` and
  * `/generations`. Building it in one place guarantees `quote == charge`

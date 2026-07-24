@@ -29,7 +29,7 @@ function contentText(result: { content?: Array<{ type: string; text?: string }> 
 }
 
 describe("MCP server wiring", () => {
-  it("registers exactly the 7 contract tools", async () => {
+  it("registers exactly the 8 contract tools", async () => {
     const client = await connectClient(makeMockFetch(() => jsonResponse(200, [])).fetchImpl);
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([
@@ -40,6 +40,7 @@ describe("MCP server wiring", () => {
       "deepy_get_result",
       "deepy_improve_prompt",
       "deepy_list_models",
+      "deepy_upload_file",
     ]);
   });
 

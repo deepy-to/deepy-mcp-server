@@ -3,6 +3,7 @@ import type { DeepyConfig } from "../config.js";
 import type { Logger } from "../logger.js";
 import { DeepyApiError } from "../errors.js";
 import { stableStringify } from "../stable-stringify.js";
+import type { FileUploadResponse } from "../types.js";
 
 export type FetchLike = typeof fetch;
 
@@ -25,6 +26,12 @@ export interface RequestOptions {
   query?: Record<string, string | number | undefined>;
   body?: unknown;
   idempotencyKey?: string;
+}
+
+export interface UploadFileInput {
+  bytes: Uint8Array;
+  filename: string;
+  contentType: string;
 }
 
 /** Outcome of fetching a generation result's bytes. */
@@ -83,6 +90,48 @@ export class DeepyApiClient {
 
   async post<T>(path: string, options: RequestOptions = {}): Promise<T> {
     return this.request<T>("POST", path, options);
+  }
+
+  /** Upload a reference as multipart without exposing the API key to the agent. */
+  async uploadFile(input: UploadFileInput): Promise<FileUploadResponse> {
+    const path = "/api/v1/public/files";
+    const url = this.buildUrl(path);
+    const form = new FormData();
+    const blob = new Blob([new Uint8Array(input.bytes)], { type: input.contentType });
+    form.append("file", blob, input.filename);
+
+    this.logger?.debug(`→ POST ${path}`);
+
+    const { response, raw } = await this.execute(
+      "POST",
+      url,
+      {
+        Authorization: `Bearer ${this.apiKey}`,
+        Accept: "application/json",
+      },
+      form,
+      this.resultsTimeoutMs
+    );
+
+    if (!response.ok) {
+      throw DeepyApiError.fromResponse(
+        response.status,
+        parseErrorBody(raw),
+        response.headers.get("retry-after")
+      );
+    }
+
+    const value = tryParseJson(raw);
+    if (value === null || typeof value !== "object") {
+      throw new DeepyApiError({
+        code: "INVALID_RESPONSE",
+        message: `The Deepy backend returned a non-JSON-object success body (HTTP ${response.status}).`,
+        httpStatus: response.status,
+      });
+    }
+
+    this.logger?.debug(`← ${response.status}`);
+    return value as FileUploadResponse;
   }
 
   /**
@@ -214,7 +263,7 @@ export class DeepyApiClient {
     method: string,
     url: string,
     headers: Record<string, string>,
-    body: string | undefined,
+    body: RequestInit["body"],
     timeoutMs: number
   ): Promise<{ response: Response; raw: string }> {
     const controller = new AbortController();

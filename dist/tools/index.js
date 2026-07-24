@@ -5,10 +5,12 @@ import { registerEstimateGeneration } from "./estimate-generation.js";
 import { registerCreateGeneration } from "./create-generation.js";
 import { registerGetGeneration } from "./get-generation.js";
 import { registerGetResult } from "./get-result.js";
+import { registerUploadFile } from "./upload-file.js";
 export function registerAllTools(server, ctx) {
     registerListModels(server, ctx);
     registerGetModel(server, ctx);
     registerImprovePrompt(server, ctx);
+    registerUploadFile(server, ctx);
     registerEstimateGeneration(server, ctx);
     registerCreateGeneration(server, ctx);
     registerGetGeneration(server, ctx);

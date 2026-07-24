@@ -1,5 +1,6 @@
 import type { DeepyConfig } from "../config.js";
 import type { Logger } from "../logger.js";
+import type { FileUploadResponse } from "../types.js";
 export type FetchLike = typeof fetch;
 /** Max bytes to inline (base64) for image/audio results. ~8 MB. */
 export declare const DEFAULT_MAX_INLINE_RESULT_BYTES: number;
@@ -18,6 +19,11 @@ export interface RequestOptions {
     query?: Record<string, string | number | undefined>;
     body?: unknown;
     idempotencyKey?: string;
+}
+export interface UploadFileInput {
+    bytes: Uint8Array;
+    filename: string;
+    contentType: string;
 }
 /** Outcome of fetching a generation result's bytes. */
 export type ResultMedia = {
@@ -54,6 +60,8 @@ export declare class DeepyApiClient {
     constructor(config: DeepyConfig, options?: DeepyApiClientOptions);
     get<T>(path: string, options?: RequestOptions): Promise<T>;
     post<T>(path: string, options?: RequestOptions): Promise<T>;
+    /** Upload a reference as multipart without exposing the API key to the agent. */
+    uploadFile(input: UploadFileInput): Promise<FileUploadResponse>;
     /**
      * Fetch a generation result's bytes WITH the API key (the server holds it),
      * so the caller never needs — and never sees — the key. Images/audio come

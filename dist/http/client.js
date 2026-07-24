@@ -45,6 +45,32 @@ export class DeepyApiClient {
     async post(path, options = {}) {
         return this.request("POST", path, options);
     }
+    /** Upload a reference as multipart without exposing the API key to the agent. */
+    async uploadFile(input) {
+        const path = "/api/v1/public/files";
+        const url = this.buildUrl(path);
+        const form = new FormData();
+        const blob = new Blob([new Uint8Array(input.bytes)], { type: input.contentType });
+        form.append("file", blob, input.filename);
+        this.logger?.debug(`→ POST ${path}`);
+        const { response, raw } = await this.execute("POST", url, {
+            Authorization: `Bearer ${this.apiKey}`,
+            Accept: "application/json",
+        }, form, this.resultsTimeoutMs);
+        if (!response.ok) {
+            throw DeepyApiError.fromResponse(response.status, parseErrorBody(raw), response.headers.get("retry-after"));
+        }
+        const value = tryParseJson(raw);
+        if (value === null || typeof value !== "object") {
+            throw new DeepyApiError({
+                code: "INVALID_RESPONSE",
+                message: `The Deepy backend returned a non-JSON-object success body (HTTP ${response.status}).`,
+                httpStatus: response.status,
+            });
+        }
+        this.logger?.debug(`← ${response.status}`);
+        return value;
+    }
     /**
      * Fetch a generation result's bytes WITH the API key (the server holds it),
      * so the caller never needs — and never sees — the key. Images/audio come

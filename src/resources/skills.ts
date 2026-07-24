@@ -27,7 +27,8 @@ Goal: pick the right Deepy model for the user's task before spending anything.
 3. Call \`deepy_get_model\` for the candidate to read its \`parameters\`,
    \`referenceLimits\`, and \`maxPromptLength\` before building the request.
 4. For image-/video-from-image models, check \`supportsReferences\` and the
-   reference limits; you must upload reference files first and pass their ids.
+   reference limits. Call \`deepy_upload_file\` for every attachment (prefer its
+   local \`filePath\`), then pass the returned ids in \`referenceFiles\`.
 
 Never invent parameters — use only what the model schema declares.
 `,
@@ -51,13 +52,15 @@ Always follow this order. Never skip the estimate or the confirmation.
 1. \`deepy_list_models\` → choose a model (see model-selection).
 2. \`deepy_get_model\` → read the parameter schema.
 3. \`deepy_improve_prompt\` (optional) → strengthen the prompt.
-4. \`deepy_estimate_generation\` → get the integer \`tokens\` cost and
+4. If the user supplied attachments, call \`deepy_upload_file\` for each and
+   put the returned ids in \`referenceFiles\`.
+5. \`deepy_estimate_generation\` → get the integer \`tokens\` cost and
    \`userBalanceAfter\`.
-5. Show the user the cost and get EXPLICIT approval.
-6. \`deepy_create_generation\` with \`confirmed=true\` and the SAME params used
+6. Show the user the cost and get EXPLICIT approval.
+7. \`deepy_create_generation\` with \`confirmed=true\` and the SAME params used
    for the estimate. The tool refuses (and calls no backend) if not confirmed.
-7. \`deepy_get_generation\` → poll until \`COMPLETED\` or \`FAILED\`.
-8. \`deepy_get_result\` → the server fetches the media with its API key and
+8. \`deepy_get_generation\` → poll until \`COMPLETED\` or \`FAILED\`.
+9. \`deepy_get_result\` → the server fetches the media with its API key and
    returns images/audio inline; videos and large files come back as a short
    note (view them in the Deepy app). Do not auto-retry a paid create on error.
 `,
