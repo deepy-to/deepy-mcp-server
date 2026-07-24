@@ -1,8 +1,10 @@
 import { DEFAULT_HTTP_TIMEOUT_MS, MIN_RESULTS_TIMEOUT_MS } from "../config.js";
 import { DeepyApiError } from "../errors.js";
 import { stableStringify } from "../stable-stringify.js";
-/** Max bytes to inline (base64) for image/audio results. ~8 MB. */
+/** Max bytes to treat as "inlineable" image/audio payload. ~8 MB. */
 export const DEFAULT_MAX_INLINE_RESULT_BYTES = 8 * 1024 * 1024;
+/** Max bytes to download for local file delivery (images + videos). ~50 MB. */
+export const DEFAULT_MAX_DOWNLOAD_RESULT_BYTES = 50 * 1024 * 1024;
 /**
  * Thin HTTP client for the Deepy public API.
  *
@@ -23,6 +25,7 @@ export class DeepyApiClient {
     timeoutMs;
     resultsTimeoutMs;
     maxInlineResultBytes;
+    maxDownloadResultBytes;
     constructor(config, options = {}) {
         this.baseUrl = config.baseUrl;
         this.apiKey = config.apiKey;
@@ -38,6 +41,7 @@ export class DeepyApiClient {
                 config.resultsTimeoutMs ??
                 Math.max(this.timeoutMs, MIN_RESULTS_TIMEOUT_MS);
         this.maxInlineResultBytes = options.maxInlineResultBytes ?? DEFAULT_MAX_INLINE_RESULT_BYTES;
+        this.maxDownloadResultBytes = Math.max(this.maxInlineResultBytes, options.maxDownloadResultBytes ?? DEFAULT_MAX_DOWNLOAD_RESULT_BYTES);
     }
     async get(path, options = {}) {
         return this.request("GET", path, options);
@@ -73,9 +77,10 @@ export class DeepyApiClient {
     }
     /**
      * Fetch a generation result's bytes WITH the API key (the server holds it),
-     * so the caller never needs — and never sees — the key. Images/audio come
-     * back inline as base64; videos and over-cap media are reported as not
-     * inlineable so the caller can point the user to the Deepy app.
+     * so the caller never needs — and never sees — the key. Small images/audio
+     * come back as `inline: true`. Videos (and oversized media under the download
+     * cap) come back as `inline: false` WITH `base64` so the tool can save a local
+     * file on the user's machine. Bodies over the download cap are refused.
      */
     async getResultMedia(publicId, index) {
         const url = this.buildUrl(`/api/v1/public/generations/${encodeURIComponent(publicId)}/results/${index}`);
@@ -99,28 +104,42 @@ export class DeepyApiClient {
             }
             const contentType = normalizeContentType(response.headers.get("content-type"));
             const declaredLength = parseContentLength(response.headers.get("content-length"));
-            // Video: never inline (mcp.md §10 keeps binary streaming out of MVP).
-            if (contentType.startsWith("video/")) {
+            const isVideo = contentType.startsWith("video/");
+            // Hard refuse bodies that already declare over the download cap — don't
+            // buffer a multi-hundred-MB video into memory.
+            if (declaredLength !== undefined && declaredLength > this.maxDownloadResultBytes) {
                 await cancelBody(response);
-                return { inline: false, reason: "video", contentType, sizeBytes: declaredLength };
+                return {
+                    inline: false,
+                    reason: isVideo ? "video" : "too-large",
+                    contentType,
+                    sizeBytes: declaredLength,
+                };
             }
-            // Skip the download entirely if the declared size is already over the cap.
-            if (declaredLength !== undefined && declaredLength > this.maxInlineResultBytes) {
-                await cancelBody(response);
-                return { inline: false, reason: "too-large", contentType, sizeBytes: declaredLength };
-            }
-            // Enforce the cap DURING the read: a missing/understated Content-Length
-            // must not let the body OOM the process. Stop + cancel once over the cap.
-            const capped = await readCapped(response, this.maxInlineResultBytes);
+            // Enforce the download cap DURING the read so a missing/understated
+            // Content-Length cannot OOM the process.
+            const capped = await readCapped(response, this.maxDownloadResultBytes);
             if (capped.overCap) {
-                return { inline: false, reason: "too-large", contentType, sizeBytes: capped.sizeBytes };
+                return {
+                    inline: false,
+                    reason: isVideo ? "video" : "too-large",
+                    contentType,
+                    sizeBytes: capped.sizeBytes,
+                };
             }
-            return {
-                inline: true,
-                contentType,
-                sizeBytes: capped.bytes.length,
-                base64: capped.bytes.toString("base64"),
-            };
+            const base64 = capped.bytes.toString("base64");
+            const sizeBytes = capped.bytes.length;
+            // Videos are never inlined into chat (base64 would break MCP clients), but
+            // the bytes are returned so the tool can write a local file for the user.
+            if (isVideo) {
+                return { inline: false, reason: "video", contentType, sizeBytes, base64 };
+            }
+            // Images/audio under the inline fetch cap → caller may embed them.
+            if (sizeBytes <= this.maxInlineResultBytes) {
+                return { inline: true, contentType, sizeBytes, base64 };
+            }
+            // Oversized image/audio: still deliver bytes for a local file save.
+            return { inline: false, reason: "too-large", contentType, sizeBytes, base64 };
         }
         catch (cause) {
             if (cause instanceof DeepyApiError)

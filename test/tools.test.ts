@@ -303,17 +303,18 @@ describe("deepy_get_result (GAP-6)", () => {
     expect(audio?.data).toBeTruthy();
   });
 
-  it("returns a note (not inline) for video results", async () => {
-    const { fetchImpl } = makeMockFetch(() =>
-      mediaResponse(Uint8Array.from([1, 2, 3]), "video/mp4")
-    );
+  it("saves video results to a local file path (never inlines, never sends to Deepy app first)", async () => {
+    const bytes = Uint8Array.from([1, 2, 3, 4, 5]);
+    const { fetchImpl } = makeMockFetch(() => mediaResponse(bytes, "video/mp4"));
     const result = await makeGetResultHandler(makeToolContext(fetchImpl))({
       publicId: "gen_vid",
       index: undefined,
     });
     expect(findBlock(result, "image")).toBeUndefined();
-    expect(textOf(result)).toMatch(/Deepy app/);
-    expect(textOf(result)).toMatch(/video/i);
+    expect(textOf(result)).toMatch(/Saved to your device:/i);
+    expect(textOf(result)).toMatch(/\.mp4/);
+    expect(textOf(result)).not.toMatch(/Open the generation in the Deepy app/i);
+    expect(serializeResult(result)).not.toContain(TEST_CONFIG.apiKey);
   });
 
   it("returns a note (not inline) for over-cap results and never the key", async () => {
@@ -321,7 +322,10 @@ describe("deepy_get_result (GAP-6)", () => {
       mediaResponse(Uint8Array.from([1, 2, 3, 4, 5, 6]), "image/png")
     );
     const result = await makeGetResultHandler(
-      makeToolContext(fetchImpl, TEST_CONFIG, { maxInlineResultBytes: 2 })
+      makeToolContext(fetchImpl, TEST_CONFIG, {
+        maxInlineResultBytes: 2,
+        maxDownloadResultBytes: 2,
+      })
     )({ publicId: "gen_big", index: undefined });
     expect(findBlock(result, "image")).toBeUndefined();
     expect(textOf(result)).toMatch(/too large|Deepy app/i);

@@ -54,9 +54,10 @@ Always follow this order. Never skip the estimate or the confirmation.
 7. \`deepy_create_generation\` with \`confirmed=true\` and the SAME params used
    for the estimate. The tool refuses (and calls no backend) if not confirmed.
 8. \`deepy_get_generation\` → poll until \`COMPLETED\` or \`FAILED\`.
-9. \`deepy_get_result\` → the server fetches the media with its API key and
-   returns images/audio inline; videos and large files come back as a short
-   note (view them in the Deepy app). Do not auto-retry a paid create on error.
+9. \`deepy_get_result\` → the server fetches the media with its API key,
+   saves it locally on the user's device, and returns the file path.
+   Small images/audio may also render inline; videos are delivered only as a
+   local file path. Do not auto-retry a paid create on error.
 `,
     "cost-confirmation": `# Deepy skill: cost confirmation
 

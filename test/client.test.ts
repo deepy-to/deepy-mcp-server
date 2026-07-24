@@ -99,23 +99,49 @@ describe("DeepyApiClient — getResultMedia", () => {
     expect(calls[0]?.headers["authorization"]).toBe(`Bearer ${TEST_CONFIG.apiKey}`);
   });
 
-  it("never inlines a video result", async () => {
-    const { fetchImpl } = makeMockFetch(() =>
-      mediaResponse(Uint8Array.from([1, 2, 3]), "video/mp4")
-    );
+  it("never inlines a video result but still downloads bytes for local save", async () => {
+    const bytes = Uint8Array.from([1, 2, 3]);
+    const { fetchImpl } = makeMockFetch(() => mediaResponse(bytes, "video/mp4"));
     const media = await clientWith(fetchImpl).getResultMedia("g", 0);
     expect(media.inline).toBe(false);
-    if (!media.inline) expect(media.reason).toBe("video");
+    if (!media.inline) {
+      expect(media.reason).toBe("video");
+      expect(media.base64).toBe(Buffer.from(bytes).toString("base64"));
+      expect(media.sizeBytes).toBe(3);
+    }
   });
 
   it("does not inline media over the byte cap", async () => {
     const { fetchImpl } = makeMockFetch(() =>
       mediaResponse(Uint8Array.from([1, 2, 3, 4, 5, 6]), "image/png")
     );
-    const client = new DeepyApiClient(TEST_CONFIG, { fetchImpl, maxInlineResultBytes: 2 });
+    const client = new DeepyApiClient(TEST_CONFIG, {
+      fetchImpl,
+      maxInlineResultBytes: 2,
+      maxDownloadResultBytes: 2,
+    });
     const media = await client.getResultMedia("g", 0);
     expect(media.inline).toBe(false);
-    if (!media.inline) expect(media.reason).toBe("too-large");
+    if (!media.inline) {
+      expect(media.reason).toBe("too-large");
+      expect(media.base64).toBeUndefined();
+    }
+  });
+
+  it("returns bytes for oversized images under the download cap", async () => {
+    const bytes = Uint8Array.from([1, 2, 3, 4, 5, 6]);
+    const { fetchImpl } = makeMockFetch(() => mediaResponse(bytes, "image/png"));
+    const client = new DeepyApiClient(TEST_CONFIG, {
+      fetchImpl,
+      maxInlineResultBytes: 2,
+      maxDownloadResultBytes: 100,
+    });
+    const media = await client.getResultMedia("g", 0);
+    expect(media.inline).toBe(false);
+    if (!media.inline) {
+      expect(media.reason).toBe("too-large");
+      expect(media.base64).toBe(Buffer.from(bytes).toString("base64"));
+    }
   });
 
   it("surfaces a backend error from the results endpoint", async () => {

@@ -89,7 +89,7 @@ Clone this repo (`git clone https://github.com/deepy-to/deepy-mcp-server`), run
 | `deepy_estimate_generation` | price a generation (no charge)                 | `POST /api/v1/public/generations/estimate`        |
 | `deepy_create_generation`   | start a generation (requires `confirmed=true`) | `POST /api/v1/public/generations`                 |
 | `deepy_get_generation`      | poll status                                    | `GET /api/v1/public/generations/{id}`             |
-| `deepy_get_result`          | fetch result media (server-side)               | `GET /api/v1/public/generations/{id}/results/{i}` |
+| `deepy_get_result`          | fetch result media to a local file             | `GET /api/v1/public/generations/{id}/results/{i}` |
 
 The server also ships MCP **prompts** and **resources** (skills) that teach an
 agent the safe generation flow.
@@ -104,7 +104,10 @@ agent the safe generation flow.
 5. Estimate the cost (`deepy_estimate_generation`).
 6. Show the price and get **explicit** user approval.
 7. Only then `deepy_create_generation` with `confirmed=true`.
-8. Poll `deepy_get_generation`, then fetch `deepy_get_result`.
+8. Poll `deepy_get_generation`, then fetch `deepy_get_result` — the connector
+   saves the file on the user's device (under `~/Downloads` when possible) and
+   returns the local path. Videos are delivered the same way; they are not
+   left as "open in the Deepy app" notes.
 
 `deepy_upload_file` accepts files up to 50 MiB. A `base64` + `filename` fallback
 exists for clients that cannot expose a local attachment path, but `filePath` is
